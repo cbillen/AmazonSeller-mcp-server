@@ -7,6 +7,29 @@ import axios from 'axios';
       expiresAt: 0
     };
 
+    // Map AWS regions to SP-API endpoints
+    const REGION_TO_ENDPOINT = {
+      'us-east-1': 'na',
+      'us-west-2': 'na',
+      'eu-west-1': 'eu',
+      'ap-southeast-1': 'fe',
+      'ap-northeast-1': 'fe'
+    };
+
+    /**
+     * Get the SP-API endpoint for the configured region
+     */
+    function getSpApiEndpoint() {
+      // Allow direct endpoint override
+      if (process.env.SP_API_ENDPOINT) {
+        return process.env.SP_API_ENDPOINT;
+      }
+      
+      const region = process.env.SP_API_REGION || 'us-east-1';
+      const endpoint = REGION_TO_ENDPOINT[region] || 'na';
+      return `sellingpartnerapi-${endpoint}.amazon.com`;
+    }
+
     /**
      * Get an access token for SP-API
      */
@@ -48,7 +71,7 @@ import axios from 'axios';
     export function generateAWSSignature(method, path, payload = '', queryParams = {}) {
       const region = process.env.SP_API_REGION || 'us-east-1';
       const service = 'execute-api';
-      const host = `sellingpartnerapi-${region}.amazon.com`;
+      const host = getSpApiEndpoint();
       const datetime = new Date().toISOString().replace(/[:-]|\.\d{3}/g, '');
       const date = datetime.substring(0, 8);
 
@@ -117,8 +140,8 @@ import axios from 'axios';
     export async function makeSpApiRequest(method, path, data = null, queryParams = {}) {
       try {
         const accessToken = await getAccessToken();
-        const region = process.env.SP_API_REGION || 'us-east-1';
-        const url = `https://sellingpartnerapi-${region}.amazon.com${path}`;
+        const host = getSpApiEndpoint();
+        const url = `https://${host}${path}`;
         
         const payload = data ? JSON.stringify(data) : '';
         const awsHeaders = generateAWSSignature(method, path, payload, queryParams);
