@@ -41,12 +41,14 @@ import axios from 'axios';
       }
 
       try {
-        const response = await axios.post('https://api.amazon.com/auth/o2/token', {
-          grant_type: 'refresh_token',
-          refresh_token: process.env.SP_API_REFRESH_TOKEN,
-          client_id: process.env.SP_API_CLIENT_ID,
-          client_secret: process.env.SP_API_CLIENT_SECRET
-        }, {
+        // Use URLSearchParams to properly encode as form data
+        const params = new URLSearchParams();
+        params.append('grant_type', 'refresh_token');
+        params.append('refresh_token', process.env.SP_API_REFRESH_TOKEN);
+        params.append('client_id', process.env.SP_API_CLIENT_ID);
+        params.append('client_secret', process.env.SP_API_CLIENT_SECRET);
+
+        const response = await axios.post('https://api.amazon.com/auth/o2/token', params, {
           headers: {
             'Content-Type': 'application/x-www-form-urlencoded'
           }
